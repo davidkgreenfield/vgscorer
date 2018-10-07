@@ -1,5 +1,5 @@
-#spring:
-#  cloud:
-#    gcp:
-#      credentials:
-#        location: specialk-1221-b0852ae7d1b1.json
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10Mb
+      maxRequestSize: 10Mb

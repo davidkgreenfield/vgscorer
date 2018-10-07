@@ -1,19 +1,21 @@
 package com.dbg.vgscorer.imaging;
 
-import com.google.cloud.Tuple;
 import com.google.cloud.vision.v1.*;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -22,14 +24,20 @@ import static java.util.Arrays.asList;
 public class MarioKartImagingController {
 
     private final ImageAnnotatorClient vision;
+    private final String secret;
 
-    public MarioKartImagingController(ImageAnnotatorClient imageAnnotatorClient) {
+    public MarioKartImagingController(ImageAnnotatorClient imageAnnotatorClient,
+                                      @Value("${secret}")String secret) {
         this.vision = imageAnnotatorClient;
+        this.secret = secret;
     }
 
 
     @PostMapping("/text/results")
-    public List<String> results(@RequestParam("file") MultipartFile file) throws IOException {
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<String>> results(@RequestParam("file") MultipartFile file,
+                                               @RequestHeader("secret") String secretParm) throws IOException {
+        if(!secret.equals(secretParm)) return new ResponseEntity(HttpStatus.FORBIDDEN);
         Image image = Image.newBuilder().setContent(ByteString.copyFrom(file.getBytes())).build();
         Feature feature = Feature.newBuilder().setType(Feature.Type.TEXT_DETECTION).build();
         AnnotateImageRequest request = AnnotateImageRequest.newBuilder()
@@ -39,7 +47,7 @@ public class MarioKartImagingController {
 
         List<AnnotateImageResponse> responsesList = vision.batchAnnotateImages(asList(request)).getResponsesList();
 
-        return translateToStringList(responsesList);
+        return new ResponseEntity(translateToStringList(responsesList),HttpStatus.OK);
 
     }
 

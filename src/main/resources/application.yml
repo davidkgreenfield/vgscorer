@@ -1,0 +1,5 @@
+#spring:
+#  cloud:
+#    gcp:
+#      credentials:
+#        location: specialk-1221-b0852ae7d1b1.json
